@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0b14; --panel:#16131f; --panel2:#1d1929; --line:#2a2538;
+    --text:#ece9f5; --mute:#8e88a3; --accent:#a970ff; --accent2:#6be3c9;
+    --gold:#f5c451; --silver:#c9cfdb; --bronze:#d38a5a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;
+       background-image:radial-gradient(ellipse 80% 50% at 50% -10%,#2a1a4a 0%,transparent 70%)}
+  .wrap{max-width:900px;margin:0 auto;padding:40px 18px 80px}
+  header{text-align:center;margin-bottom:32px}
+  header .tag{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  header h1{font-family:"Space Grotesk",sans-serif;font-size:clamp(32px,6vw,52px);margin:8px 0 6px;letter-spacing:-.02em}
+  header p{color:var(--mute);font-size:14px}
+  .demo{display:none;margin:14px auto 0;max-width:460px;font-size:13px;background:#2a2112;color:var(--gold);
+        border:1px solid #4a3a18;border-radius:10px;padding:8px 12px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;margin-bottom:22px}
+  .tabs{display:flex;gap:4px;background:var(--panel);padding:4px;border-radius:12px;border:1px solid var(--line)}
+  .tabs button{background:none;border:0;color:var(--mute);font:600 13px Inter,sans-serif;padding:9px 14px;border-radius:9px;cursor:pointer}
+  .tabs button.on{background:var(--accent);color:#fff}
+  .tabs button:not(.on):hover{color:var(--text)}
+  input[type=search]{flex:1;min-width:180px;max-width:260px;background:var(--panel);border:1px solid var(--line);color:var(--text);
+        font:14px Inter,sans-serif;padding:10px 14px;border-radius:12px;outline:none}
+  input[type=search]:focus{border-color:var(--accent)}
+
+  .podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:12px;align-items:end;margin-bottom:22px}
+  .pod{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 14px;text-align:center;position:relative}
+  .pod.p1{padding-top:30px;border-color:#5a4a1f;background:linear-gradient(180deg,#221c10,var(--panel))}
+  .pod .medal{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;margin:0 auto 10px;
+        font:700 15px "Space Grotesk",sans-serif;color:#1a1408}
+  .pod.p1 .medal{background:var(--gold);width:40px;height:40px}
+  .pod.p2 .medal{background:var(--silver)} .pod.p3 .medal{background:var(--bronze)}
+  .pod .name{font-weight:600;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pod .big{font-family:"Space Grotesk",sans-serif;font-size:24px;font-weight:700;margin-top:6px}
+  .pod .small{color:var(--mute);font-size:12px;margin-top:2px}
+
+  .list{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+  .row{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:14px 18px;border-top:1px solid var(--line)}
+  .row:first-child{border-top:0}
+  .row:hover{background:var(--panel2)}
+  .rank{font:700 16px "Space Grotesk",sans-serif;color:var(--mute);text-align:center}
+  .who .name{font-weight:600;font-size:15px}
+  .who .meta{color:var(--mute);font-size:12px;margin-top:3px;display:flex;gap:12px;flex-wrap:wrap}
+  .bar{height:5px;background:var(--line);border-radius:4px;margin-top:8px;max-width:280px;overflow:hidden}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:4px}
+  .stat{text-align:right}
+  .stat .v{font:700 18px "Space Grotesk",sans-serif}
+  .stat .k{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+  .lvl{display:inline-block;background:#2a1f45;color:var(--accent);font-weight:700;font-size:11px;padding:2px 7px;border-radius:6px;margin-left:8px;vertical-align:2px}
+  .empty{padding:40px;text-align:center;color:var(--mute)}
+  .more{display:block;margin:16px auto 0;background:var(--panel);border:1px solid var(--line);color:var(--text);
+        font:600 13px Inter,sans-serif;padding:10px 20px;border-radius:10px;cursor:pointer}
+  .more[hidden]{display:none}
+  footer{text-align:center;color:var(--mute);font-size:12px;margin-top:30px}
+  @media (max-width:560px){
+    .podium{grid-template-columns:1fr;}
+    .pod.p1{order:-1}
+    .row{grid-template-columns:36px 1fr auto;padding:12px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="tag">Channel Leaderboard</div>
+    <h1 id="title">Leaderboard</h1>
+    <p id="updated">Loading…</p>
+    <div class="demo" id="demo">Showing demo data: leaderboard.json wasn't found yet. It appears after Streamer.bot's first upload.</div>
+  </header>
+
+  <div class="controls">
+    <div class="tabs" id="tabs">
+      <button data-k="xp" class="on">Experience</button>
+      <button data-k="wt">Watchtime</button>
+      <button data-k="st">Streak</button>
+      <button data-k="msg">Messages</button>
+    </div>
+    <input type="search" id="q" placeholder="Search a username…">
+  </div>
+
+  <div class="podium" id="podium"></div>
+  <div class="list" id="list"></div>
+  <button class="more" id="more" hidden>Show more</button>
+  <footer>Updates automatically while the stream is live</footer>
+</div>
+
+<script>
+const DEMO = {channel:"YourChannel",updated:new Date().toISOString(),users:[
+  {n:"Miralow",l:"miralow",xp:130426,lv:81,pct:19,wt:21480,st:31,best:44,msg:18230},
+  {n:"Nezuraa",l:"nezuraa",xp:104615,lv:72,pct:79,wt:17320,st:11,best:39,msg:15012},
+  {n:"MonoZone",l:"monozone",xp:91908,lv:68,pct:25,wt:15800,st:6,best:22,msg:12001},
+  {n:"blueasteroid",l:"blueasteroid",xp:72966,lv:60,pct:86,wt:13110,st:74,best:74,msg:9870},
+  {n:"iiMythic",l:"iimythic",xp:46214,lv:48,pct:52,wt:8905,st:3,best:15,msg:6120},
+  {n:"PixelPanda",l:"pixelpanda",xp:30110,lv:39,pct:12,wt:6020,st:9,best:12,msg:4011},
+  {n:"night_owl",l:"night_owl",xp:18450,lv:30,pct:70,wt:4400,st:2,best:8,msg:2650}
+]};
+
+const LABEL = {xp:"XP", wt:"Watchtime", st:"Streak", msg:"Messages"};
+let data = null, key = "xp", shown = 50;
+
+const fmtNum = n => n.toLocaleString();
+const fmtTime = m => { const h = Math.floor(m/60); return h ? `${fmtNum(h)}h ${m%60}m` : `${m}m`; };
+const val = (u,k) => k==="wt" ? fmtTime(u.wt) : k==="st" ? `${u.st} 🔥` : fmtNum(u[k]);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function ago(iso){
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s/60) + " min ago";
+  if (s < 86400) return Math.round(s/3600) + " h ago";
+  return Math.round(s/86400) + " days ago";
+}
+
+function render(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const sorted = [...data.users].sort((a,b) => b[key]-a[key] || b.xp-a.xp)
+                                .map((u,i) => ({...u, rank:i+1}));
+  const list = q ? sorted.filter(u => u.n.toLowerCase().includes(q) || u.l.includes(q)) : sorted;
+
+  const pod = document.getElementById("podium");
+  const usePodium = !q && sorted.length >= 3, offset = usePodium ? 3 : 0;
+  if (usePodium){
+    pod.style.display = "";
+    const order = [1,0,2];
+    pod.innerHTML = order.map(i => { const u = sorted[i]; return `
+      <div class="pod p${i+1}">
+        <div class="medal">${i+1}</div>
+        <div class="name">${esc(u.n)}</div>
+        <div class="big">${val(u,key)}</div>
+        <div class="small">Level ${u.lv} · ${fmtTime(u.wt)}</div>
+      </div>`; }).join("");
+  } else pod.style.display = "none";
+
+  const rows = list.slice(offset, offset + shown);
+  document.getElementById("list").innerHTML = rows.length ? rows.map(u => `
+    <div class="row">
+      <div class="rank">#${u.rank}</div>
+      <div class="who">
+        <div class="name">${esc(u.n)}<span class="lvl">LV ${u.lv}</span></div>
+        <div class="meta"><span>${fmtNum(u.xp)} XP</span><span>${fmtTime(u.wt)}</span><span>${u.st} streak (best ${u.best})</span></div>
+        <div class="bar" title="${u.pct}% to level ${u.lv+1}"><i style="width:${u.pct}%"></i></div>
+      </div>
+      <div class="stat"><div class="v">${val(u,key)}</div><div class="k">${LABEL[key]}</div></div>
+    </div>`).join("") : `<div class="empty">${q ? "No one found with that name" : "Nobody else on the board yet"}</div>`;
+
+  document.getElementById("more").hidden = list.length - offset <= shown;
+}
+
+async function load(){
+  try {
+    const r = await fetch("leaderboard.json?t=" + Date.now(), {cache:"no-store"});
+    if (!r.ok) throw 0;
+    data = await r.json();
+  } catch {
+    if (!data){ data = DEMO; document.getElementById("demo").style.display = "block"; }
+  }
+  document.getElementById("title").textContent = data.channel + "'s Leaderboard";
+  document.title = data.channel + " Leaderboard";
+  document.getElementById("updated").textContent = `${data.users.length} viewers · updated ${ago(data.updated)}`;
+  render();
+}
+
+document.getElementById("tabs").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll("#tabs button").forEach(x => x.classList.toggle("on", x === b));
+  key = b.dataset.k; shown = 50; render();
+});
+document.getElementById("q").addEventListener("input", () => { shown = 50; render(); });
+document.getElementById("more").addEventListener("click", () => { shown += 50; render(); });
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
