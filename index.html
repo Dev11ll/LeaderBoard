@@ -43,7 +43,7 @@
   .pod .small{color:var(--mute);font-size:12px;margin-top:2px}
 
   .list{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-  .row{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:14px 18px;border-top:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:44px 42px 1fr auto;gap:14px;align-items:center;padding:14px 18px;border-top:1px solid var(--line)}
   .row:first-child{border-top:0}
   .row:hover{background:var(--panel2)}
   .rank{font:700 16px "Space Grotesk",sans-serif;color:var(--mute);text-align:center}
@@ -55,6 +55,15 @@
   .stat .v{font:700 18px "Space Grotesk",sans-serif}
   .stat .k{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
   .lvl{display:inline-block;background:#2a1f45;color:var(--accent);font-weight:700;font-size:11px;padding:2px 7px;border-radius:6px;margin-left:8px;vertical-align:2px}
+  .av{position:relative;flex:none;border-radius:50%;overflow:hidden;display:grid;place-items:center;
+      font:700 16px "Space Grotesk",sans-serif;color:#fff;background:var(--panel2)}
+  .av img{width:100%;height:100%;object-fit:cover;display:block}
+  .row .av{width:42px;height:42px}
+  .pod .av{width:72px;height:72px;margin:0 auto 12px;font-size:26px;border:3px solid var(--line)}
+  .pod.p1 .av{width:88px;height:88px;border-color:var(--gold)}
+  .pod.p2 .av{border-color:var(--silver)} .pod.p3 .av{border-color:var(--bronze)}
+  .pod .medal{position:absolute;top:12px;left:12px;margin:0}
+  .pod.p1 .medal{width:34px;height:34px}
   .empty{padding:40px;text-align:center;color:var(--mute)}
   .more{display:block;margin:16px auto 0;background:var(--panel);border:1px solid var(--line);color:var(--text);
         font:600 13px Inter,sans-serif;padding:10px 20px;border-radius:10px;cursor:pointer}
@@ -63,7 +72,8 @@
   @media (max-width:560px){
     .podium{grid-template-columns:1fr;}
     .pod.p1{order:-1}
-    .row{grid-template-columns:36px 1fr auto;padding:12px}
+    .row{grid-template-columns:30px 36px 1fr auto;gap:10px;padding:12px}
+    .row .av{width:36px;height:36px}
   }
 </style>
 </head>
@@ -93,7 +103,7 @@
 </div>
 
 <script>
-const DEMO = {channel:"YourChannel",updated:new Date().toISOString(),users:[
+const DEMO = {channel:"devvvvvvvvil",updated:new Date().toISOString(),users:[
   {n:"Miralow",l:"miralow",xp:130426,lv:81,pct:19,wt:21480,st:31,best:44,msg:18230},
   {n:"Nezuraa",l:"nezuraa",xp:104615,lv:72,pct:79,wt:17320,st:11,best:39,msg:15012},
   {n:"MonoZone",l:"monozone",xp:91908,lv:68,pct:25,wt:15800,st:6,best:22,msg:12001},
@@ -110,6 +120,16 @@ const fmtNum = n => n.toLocaleString();
 const fmtTime = m => { const h = Math.floor(m/60); return h ? `${fmtNum(h)}h ${m%60}m` : `${m}m`; };
 const val = (u,k) => k==="wt" ? fmtTime(u.wt) : k==="st" ? `${u.st} 🔥` : fmtNum(u[k]);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+const COLORS = ["#a970ff","#6be3c9","#f5c451","#ff7a90","#5aa9ff","#ff9f43","#7bd88f"];
+function avatar(u){
+  const letter = esc((u.n || "?").charAt(0).toUpperCase());
+  const color = COLORS[[...u.l].reduce((h,c)=>h+c.charCodeAt(0),0) % COLORS.length];
+  const fallback = `<span style="color:${color}">${letter}</span>`;
+  if (!u.a) return `<div class="av">${fallback}</div>`;
+  return `<div class="av"><img src="${esc(u.a)}" alt="" loading="lazy" referrerpolicy="no-referrer"
+          onerror="this.parentNode.innerHTML='${fallback.replace(/"/g,'&quot;')}'"></div>`;
+}
 
 function ago(iso){
   const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
@@ -133,6 +153,7 @@ function render(){
     pod.innerHTML = order.map(i => { const u = sorted[i]; return `
       <div class="pod p${i+1}">
         <div class="medal">${i+1}</div>
+        ${avatar(u)}
         <div class="name">${esc(u.n)}</div>
         <div class="big">${val(u,key)}</div>
         <div class="small">Level ${u.lv} · ${fmtTime(u.wt)}</div>
@@ -143,6 +164,7 @@ function render(){
   document.getElementById("list").innerHTML = rows.length ? rows.map(u => `
     <div class="row">
       <div class="rank">#${u.rank}</div>
+      ${avatar(u)}
       <div class="who">
         <div class="name">${esc(u.n)}<span class="lvl">LV ${u.lv}</span></div>
         <div class="meta"><span>${fmtNum(u.xp)} XP</span><span>${fmtTime(u.wt)}</span><span>${u.st} streak (best ${u.best})</span></div>
